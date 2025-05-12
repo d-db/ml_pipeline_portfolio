@@ -1,20 +1,31 @@
-# End-to-End ML Pipeline for Bore-Oil Forecasting
+# Bore-Oil Production Forecasting
 
-This repository implements a complete workflow for predicting daily bore-oil production volume:
+This project implements an end-to-end machine-learning workflow for predicting daily oil-production volume from bore-well data. It consists of three main stages:
 
-1. **Exploratory Data Analysis & ETL** (`notebooks/01_eda_etl.ipynb`)
-   - Loads raw data (`data/raw/volve_prod.xlsx`), excludes bore-wells 4 & 5
-   - Restores index to a `DATEPRD` column and parses dates
-   - Cleans missing values, normalizes metadata
-   - Visualizes distributions, correlations, and seasonal trends
-   - Outputs cleaned CSV (`data/processed/production_cleaned.csv`)
+1. **Exploratory Data Analysis & ETL**  
+   _Notebook: `notebooks/01_eda_etl.ipynb`_  
+   - Loads raw data (`data/raw/volve_prod.xlsx`), inspects shape, types, and basic statistics  
+   - Identifies high-missingness wells (4 & 5) and excludes them from modeling  
+   - Resets index to preserve original `DATEPRD` column  
+   - Cleans and normalizes metadata; parses dates  
+   - Visualizes distributions, correlations, and seasonal trends  
+   - Exports a cleaned CSV (`data/processed/production_cleaned.csv`)
 
-2. **Feature Engineering & Model Training** (`src/feature_engineering_and_model_training.py`)
-   - Extracts temporal features (month, day-of-year, day-of-week)
-   - Drops identifiers/text columns
-   - Builds preprocessing pipelines (median impute + scale for numerics, most-freq impute + one-hot for categoricals)
-   - Grid-searches four regressors: Ridge, Lasso, Random Forest, Gradient Boosting
-   - Evaluates on hold-out test set using MSE & R² metrics
+2. **Feature Engineering & Preprocessing**  
+   _Continued in `01_eda_etl.ipynb` and mirrored in `src/feature_engineering_and_model_training.py`_  
+   - Extracts temporal features: month, day-of-year, day-of-week  
+   - Drops identifier/text columns (e.g. well names, field codes)  
+   - Builds a `ColumnTransformer` with:  
+     - **Numeric pipeline**: median imputation → standard scaling  
+     - **Categorical pipeline**: most-frequent imputation → one-hot encoding  
+
+3. **Model Training & Evaluation**  
+   _Script: `src/feature_engineering_and_model_training.py`_  
+   - Splits data into train/test (80/20, random_state=42)  
+   - Runs `GridSearchCV` over four regressors:  
+     - Ridge, Lasso (linear)  
+     - Random Forest, Gradient Boosting (tree-based)  
+   - Evaluates with MSE and R² on the hold-out test set
 
 ## Results Summary
 
@@ -25,7 +36,7 @@ This repository implements a complete workflow for predicting daily bore-oil pro
 | Random Forest       | ~1770    | ~1770    | 0.999   |
 | Gradient Boosting   | ~1745    | ~1767    | 0.999   |
 
-Tree-based methods capture non-linear patterns and halve the error of linear models, achieving near-perfect explained variance.
+Tree-based models capture non-linear patterns and roughly halve the error of linear models, achieving near-perfect explained variance.
 
 ## Getting Started
 
@@ -34,37 +45,9 @@ git clone git@github.com:d-db/ml_pipeline_portfolio.git
 cd ml_pipeline_portfolio
 pip install -r requirements.txt
 
-# Launch EDA notebook
+# Launch the EDA & ETL notebook
 jupyter lab notebooks/01_eda_etl.ipynb
 
-# Run feature engineering & modeling
+# Or run the standalone script
 python src/feature_engineering_and_model_training.py
-cat << 'EOF' > README.md
-# End-to-End ML Pipeline for Bore-Oil Forecasting
-
-This repository implements a complete workflow for predicting daily bore-oil production volume:
-
-1. **Exploratory Data Analysis & ETL** (`notebooks/01_eda_etl.ipynb`)
-   - Loads raw data (`data/raw/volve_prod.xlsx`), excludes bore-wells 4 & 5
-   - Restores index to a `DATEPRD` column and parses dates
-   - Cleans missing values, normalizes metadata
-   - Visualizes distributions, correlations, and seasonal trends
-   - Outputs cleaned CSV (`data/processed/production_cleaned.csv`)
-
-2. **Feature Engineering & Model Training** (`src/feature_engineering_and_model_training.py`)
-   - Extracts temporal features (month, day-of-year, day-of-week)
-   - Drops identifiers/text columns
-   - Builds preprocessing pipelines (median impute + scale for numerics, most-freq impute + one-hot for categoricals)
-   - Grid-searches four regressors: Ridge, Lasso, Random Forest, Gradient Boosting
-   - Evaluates on hold-out test set using MSE & R² metrics
-
-## Results Summary
-
-| Model               | CV MSE   | Test MSE | Test R² |
-|---------------------|---------:|---------:|--------:|
-| Ridge               | ~3960    | ~3960    | 0.998   |
-| Lasso               | ~3960    | ~3960    | 0.998   |
-| Random Forest       | ~1770    | ~1770    | 0.999   |
-| Gradient Boosting   | ~1745    | ~1767    | 0.999   |
-
-Tree-based methods capture non-linear patterns and halve the error of linear models, achieving near-perfect explained variance.
+EOD
